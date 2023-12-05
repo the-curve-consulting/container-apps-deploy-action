@@ -459,7 +459,7 @@ runs:
       if: ${{ env.CA_GH_ACTION_COMMAND_ARG != '' && env.CA_GH_ACTION_YAML_PROVIDED != 'true' }}
       shell: bash
       run: |
-        CA_GH_ACTION_COMMAND_ARG="--target-port ${{ env.CA_GH_ACTION_COMMAND_ARG }}"
+        CA_GH_ACTION_COMMAND_ARG="--command ${{ env.CA_GH_ACTION_COMMAND_ARG }}"
         echo "CA_GH_ACTION_COMMAND_ARG=${CA_GH_ACTION_COMMAND_ARG}" >> $GITHUB_ENV
 
     - name: Export environment variables argument to environment variable if the Container App does not exist
