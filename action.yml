@@ -113,6 +113,10 @@ inputs:
       endpoint configured. If set to "internal", the Container App will be visible from within the app environment only.
       If set to "disabled", ingress will be disabled for this Container App and will not have an HTTP or TCP endpoint.'
     required: false
+  command:
+    description: |
+      'If set will override the command that the container will executed during startup'
+    required: false
   yamlConfigPath:
     description: |
       'Full path (on the executing GitHub runner) to the YAML file detailing the configuration of the Container App.
@@ -422,6 +426,13 @@ runs:
         CA_GH_ACTION_TARGET_PORT="${{ inputs.targetPort }}"
         echo "CA_GH_ACTION_TARGET_PORT=${CA_GH_ACTION_TARGET_PORT}" >> $GITHUB_ENV
 
+    - name: Export command to environment variable
+      if: ${{ inputs.command != '' && env.CA_GH_ACTION_YAML_PROVIDED != 'true' }}
+      shell: bash
+      run: |
+        CA_GH_ACTION_COMMAND_ARG="${{ inputs.command }}"
+        echo "CA_GH_ACTION_COMMAND_ARG=${CA_GH_ACTION_COMMAND_ARG}" >> $GITHUB_ENV
+
     - name: Default to target port 80 if one wasn't provided and no Dockerfile provided/found with the application source
       if: ${{ env.CA_GH_ACTION_INGRESS_ENABLED == 'true' && inputs.targetPort == '' && env.CA_GH_ACTION_DOCKERFILE_PATH == '' && inputs.appSourcePath != '' && env.CA_GH_ACTION_YAML_PROVIDED != 'true' }}
       shell: bash
@@ -442,6 +453,14 @@ runs:
       run: |
         CA_GH_ACTION_TARGET_PORT_ARG="--target-port ${{ env.CA_GH_ACTION_TARGET_PORT }}"
         echo "CA_GH_ACTION_TARGET_PORT_ARG=${CA_GH_ACTION_TARGET_PORT_ARG}" >> $GITHUB_ENV
+
+
+    - name: Export command information to environment variable for Azure CLI command
+      if: ${{ env.CA_GH_ACTION_COMMAND_ARG != '' && env.CA_GH_ACTION_YAML_PROVIDED != 'true' }}
+      shell: bash
+      run: |
+        CA_GH_ACTION_COMMAND_ARG="--target-port ${{ env.CA_GH_ACTION_COMMAND_ARG }}"
+        echo "CA_GH_ACTION_COMMAND_ARG=${CA_GH_ACTION_COMMAND_ARG}" >> $GITHUB_ENV
 
     - name: Export environment variables argument to environment variable if the Container App does not exist
       if: ${{ inputs.environmentVariables != '' && env.CA_GH_ACTION_RESOURCE_EXISTS == 'false' && env.CA_GH_ACTION_YAML_PROVIDED != 'true' }}
@@ -600,6 +619,7 @@ runs:
           -n ${{ inputs.containerAppName }} \
           -i ${{ env.CA_GH_ACTION_IMAGE_TO_DEPLOY }} \
           --environment ${{ env.CA_GH_ACTION_CONTAINER_APP_ENVIRONMENT }} \
+          ${{ env.CA_GH_ACTION_COMMAND_ARG }} \
           ${{ env.CA_GH_ACTION_INGRESS_ARG }} \
           ${{ env.CA_GH_ACTION_TARGET_PORT_ARG }} \
           ${{ env.CA_GH_ACTION_REGISTRY_LOGIN_ARG }} \
@@ -651,6 +671,13 @@ runs:
       run: |
         CA_GH_ACTION_INGRESS_ARG=""
         echo "CA_GH_ACTION_INGRESS_ARG=${CA_GH_ACTION_INGRESS_ARG}" >> $GITHUB_ENV
+
+    - name: Reset the command argument environment variable if it wasn't provided (use default command value)
+      if: ${{ inputs.ingress == '' && env.CA_GH_ACTION_YAML_PROVIDED != 'true' && env.CA_GH_ACTION_RESOURCE_EXISTS == 'true' }}
+      shell: bash
+      run: |
+        CA_GH_ACTION_COMMAND_ARG=""
+        echo "CA_GH_ACTION_COMMAND_ARG=${CA_GH_ACTION_COMMAND_ARG}" >> $GITHUB_ENV
 
     - name: Reset the environment variables argument environment variable for the 'up' command
       if: ${{ env.CA_GH_ACTION_USE_UP == 'true' && inputs.environmentVariables != '' }}
