@@ -706,7 +706,7 @@ runs:
       shell: bash
       run: |
         az containerapp up \
-          -g ${{ env.CA_GH_ACTION_RESOURCE_GROUP }} \
+          -g ${{ env.CA_GH_ACTION_RESOURCE_GROUP }} \=
           -n ${{ inputs.containerAppName }} \
           -i ${{ env.CA_GH_ACTION_IMAGE_TO_DEPLOY }} \
           ${{ env.CA_GH_ACTION_TARGET_PORT_ARG }} \
