@@ -627,12 +627,13 @@ runs:
           --output none
 
     - name: Update the existing Container App from a YAML configuration file
-      if: ${{ env.CA_GH_ACTION_YAML_PROVIDED == 'true' && env.CA_GH_ACTION_RESOURCE_EXISTS == 'true' }}
+      if: ${{ env.CA_GH_ACTION_YAML_PROVIDED == 'true' && env.CA_GH_ACTION_RESOURCE_EXISTS == 'true' }} || (inputs.command != '')
       shell: bash
       run: |
         az containerapp update \
           -g ${{ env.CA_GH_ACTION_RESOURCE_GROUP }} \
           -n ${{ inputs.containerAppName }} \
+          ${{ env.CA_GH_ACTION_COMMAND_ARG }} \
           --yaml ${{ inputs.yamlConfigPath }} \
           --output none
 
